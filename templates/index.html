@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Investment Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+    <header>
+        <h1>Personal Investment Tracker</h1>
+        <p>Track your trades and visualize performance for your tickers.</p>
+    </header>
+
+    <main>
+        <section class="card">
+            <h2>Add Trade</h2>
+            <form id="trade-form">
+                <div class="form-row">
+                    <label for="ticker">Ticker</label>
+                    <input id="ticker" name="ticker" type="text" required placeholder="e.g., AAPL" autocomplete="off">
+                </div>
+                <div class="form-row">
+                    <label for="buy_date">Buy Date</label>
+                    <input id="buy_date" name="buy_date" type="date" required>
+                </div>
+                <div class="form-row">
+                    <label for="buy_price">Buy Price</label>
+                    <input id="buy_price" name="buy_price" type="number" min="0" step="0.01" required>
+                </div>
+                <div class="form-row">
+                    <label for="quantity">Quantity</label>
+                    <input id="quantity" name="quantity" type="number" min="0" step="0.01" required>
+                </div>
+                <button type="submit">Save Trade</button>
+                <p id="form-message" class="message"></p>
+            </form>
+        </section>
+
+        <section class="card">
+            <div class="ticker-controls">
+                <h2>View Ticker</h2>
+                <div class="ticker-inputs">
+                    <label for="ticker-select">Saved tickers</label>
+                    <select id="ticker-select">
+                        <option value="">-- Choose a ticker --</option>
+                    </select>
+                    <span class="or">or</span>
+                    <label for="manual-ticker">Enter ticker</label>
+                    <input id="manual-ticker" type="text" placeholder="Type ticker">
+                    <button id="load-ticker">Load</button>
+                </div>
+                <p id="ticker-message" class="message"></p>
+            </div>
+            <div class="chart-container">
+                <canvas id="price-chart" aria-label="Price chart for selected ticker" role="img"></canvas>
+            </div>
+            <div id="trades-container">
+                <h3>Trades</h3>
+                <table id="trades-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
