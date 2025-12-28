@@ -5,8 +5,12 @@ const manualTickerInput = document.getElementById("manual-ticker");
 const tickerMessage = document.getElementById("ticker-message");
 const tradesTableBody = document.querySelector("#trades-table tbody");
 const loadTickerButton = document.getElementById("load-ticker");
+const rangeButtons = document.querySelectorAll(".range-button");
+const summaryText = document.getElementById("summary-text");
 
 let chart;
+let selectedRange = document.querySelector(".range-button.active")?.dataset.range || "1y";
+let lastLoadedTicker = "";
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-US", {
@@ -82,7 +86,34 @@ function renderTrades(trades) {
   });
 }
 
-function renderChart(prices, trades, ticker) {
+function renderSummary(trades, prices) {
+  if (!trades.length) {
+    summaryText.textContent = "Add trades to see your totals.";
+    summaryText.classList.remove("error");
+    return;
+  }
+
+  const totalQuantity = trades.reduce((sum, trade) => sum + Number(trade.quantity), 0);
+  const totalInvested = trades.reduce(
+    (sum, trade) => sum + Number(trade.buy_price) * Number(trade.quantity),
+    0
+  );
+  const lastPrice = prices.length ? Number(prices[prices.length - 1].close) : null;
+
+  if (lastPrice === null) {
+    summaryText.textContent = `You purchased ${totalQuantity} shares for ${formatCurrency(totalInvested)}. Current price unavailable for this range.`;
+    summaryText.classList.add("error");
+    return;
+  }
+
+  const currentValue = lastPrice * totalQuantity;
+  summaryText.textContent = `You purchased ${totalQuantity} shares for ${formatCurrency(
+    totalInvested
+  )}. Current value: ${formatCurrency(currentValue)}.`;
+  summaryText.classList.remove("error");
+}
+
+function renderChart(prices, trades, ticker, range) {
   const ctx = document.getElementById("price-chart").getContext("2d");
   const labels = prices.map((point) => point.date);
 
@@ -152,7 +183,16 @@ function renderChart(prices, trades, ticker) {
         x: {
           type: "time",
           time: {
-            unit: "month",
+            unit:
+              {
+                "1d": "hour",
+                "5d": "day",
+                "1mo": "day",
+                "6mo": "month",
+                "1y": "month",
+                "5y": "year",
+                max: "year",
+              }[range] || "day",
             tooltipFormat: "yyyy-MM-dd",
           },
         },
@@ -170,6 +210,7 @@ function renderChart(prices, trades, ticker) {
 async function loadTickerData(ticker) {
   tickerMessage.textContent = "";
   tickerMessage.classList.remove("error");
+  summaryText.textContent = "";
   if (!ticker) {
     tickerMessage.textContent = "Please select or enter a ticker.";
     tickerMessage.classList.add("error");
@@ -178,17 +219,20 @@ async function loadTickerData(ticker) {
 
   try {
     const [priceResponse, tradesResponse] = await Promise.all([
-      fetchJson(`/api/prices/${ticker}`),
+      fetchJson(`/api/prices/${ticker}?range=${selectedRange}`),
       fetchJson(`/api/trades/${ticker}`),
     ]);
 
+    lastLoadedTicker = ticker;
     renderTrades(tradesResponse.trades);
     if (!priceResponse.prices.length) {
       tickerMessage.textContent = "No price data available for this ticker.";
-      renderChart([], tradesResponse.trades, ticker);
+      renderChart([], tradesResponse.trades, ticker, selectedRange);
+      renderSummary(tradesResponse.trades, []);
       return;
     }
-    renderChart(priceResponse.prices, tradesResponse.trades, ticker);
+    renderChart(priceResponse.prices, tradesResponse.trades, ticker, selectedRange);
+    renderSummary(tradesResponse.trades, priceResponse.prices);
   } catch (error) {
     tickerMessage.textContent = error.message;
     tickerMessage.classList.add("error");
@@ -200,6 +244,17 @@ tradeForm.addEventListener("submit", handleAddTrade);
 loadTickerButton.addEventListener("click", () => {
   const ticker = manualTickerInput.value.trim().toUpperCase() || tickerSelect.value;
   loadTickerData(ticker);
+});
+
+rangeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    selectedRange = button.dataset.range;
+    rangeButtons.forEach((btn) => btn.classList.remove("active"));
+    button.classList.add("active");
+    if (lastLoadedTicker) {
+      loadTickerData(lastLoadedTicker);
+    }
+  });
 });
 
 document.addEventListener("DOMContentLoaded", () => {

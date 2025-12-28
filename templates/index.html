@@ -53,9 +53,22 @@
                     <button id="load-ticker">Load</button>
                 </div>
                 <p id="ticker-message" class="message"></p>
+                <div class="range-controls" aria-label="Price range options">
+                    <button class="range-button" data-range="1d">1D</button>
+                    <button class="range-button" data-range="5d">5D</button>
+                    <button class="range-button" data-range="1mo">1M</button>
+                    <button class="range-button" data-range="6mo">6M</button>
+                    <button class="range-button active" data-range="1y">1Y</button>
+                    <button class="range-button" data-range="5y">5Y</button>
+                    <button class="range-button" data-range="max">Max</button>
+                </div>
             </div>
             <div class="chart-container">
                 <canvas id="price-chart" aria-label="Price chart for selected ticker" role="img"></canvas>
+            </div>
+            <div id="summary-container">
+                <h3>Holdings Summary</h3>
+                <p id="summary-text" class="message"></p>
             </div>
             <div id="trades-container">
                 <h3>Trades</h3>
