@@ -121,8 +121,24 @@ def price_history(ticker: str):
     if not normalized:
         return jsonify({"error": "Ticker is required."}), 400
 
-    # Fetch the last year's worth of daily data.
-    history = yf.Ticker(normalized).history(period="1y", interval="1d")
+    range_param = request.args.get("range", "1y").lower()
+    allowed_ranges: Dict[str, Dict[str, str]] = {
+        "1d": {"period": "1d", "interval": "30m"},
+        "5d": {"period": "5d", "interval": "1h"},
+        "1mo": {"period": "1mo", "interval": "1d"},
+        "6mo": {"period": "6mo", "interval": "1d"},
+        "1y": {"period": "1y", "interval": "1d"},
+        "5y": {"period": "5y", "interval": "1wk"},
+        "max": {"period": "max", "interval": "1mo"},
+    }
+
+    if range_param not in allowed_ranges:
+        return jsonify({"error": "Invalid range requested."}), 400
+
+    period = allowed_ranges[range_param]["period"]
+    interval = allowed_ranges[range_param]["interval"]
+
+    history = yf.Ticker(normalized).history(period=period, interval=interval)
     if history.empty:
         return jsonify({"prices": []})
 
